@@ -13,7 +13,8 @@ public class LocationHistory {
     private Double latitude;
     private Double longitude;
     private LocalDateTime timestamp;
-
+public LocationHistory() {
+    }
     // Standard Constructor
     public LocationHistory(Long passengerId, Double latitude, Double longitude, LocalDateTime timestamp) {
         this.passengerId = passengerId;
