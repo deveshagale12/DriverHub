@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passenger Portal | RideEase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 min-h-screen pb-20">
+
+    <nav class="bg-emerald-600 text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black italic tracking-tighter">RIDE<span class="text-emerald-200">EASE</span></h1>
+            <div id="userInfo" class="hidden flex items-center gap-3">
+                <span id="navName" class="text-sm font-bold"></span>
+                <button onclick="location.reload()" class="text-xs bg-emerald-700 px-3 py-1 rounded-full">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="authSection" class="max-w-md mx-auto mt-12 px-6">
+        <div class="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+            <div id="loginForm">
+                <h2 class="text-3xl font-bold text-slate-800 mb-6">Let's go.</h2>
+                <div class="space-y-4">
+                    <input type="email" id="loginEmail" placeholder="Email" class="w-full p-4 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="password" id="loginPass" placeholder="Password" class="w-full p-4 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button onclick="handleLogin()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-black transition">Login</button>
+                </div>
+                <p class="mt-6 text-center text-slate-500 text-sm">Need an account? <a href="#" onclick="toggleAuth()" class="text-emerald-600 font-bold">Register</a></p>
+            </div>
+            
+            <div id="registerForm" class="hidden">
+                <h2 class="text-3xl font-bold text-slate-800 mb-6">Sign Up.</h2>
+                <div class="space-y-4">
+                    <input type="text" id="regName" placeholder="Full Name" class="w-full p-4 bg-slate-100 rounded-2xl outline-none">
+                    <input type="email" id="regEmail" placeholder="Email" class="w-full p-4 bg-slate-100 rounded-2xl outline-none">
+                    <input type="password" id="regPass" placeholder="Password" class="w-full p-4 bg-slate-100 rounded-2xl outline-none">
+                    <button onclick="handleRegister()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold">Create Account</button>
+                </div>
+                <p class="mt-6 text-center text-slate-500 text-sm"><a href="#" onclick="toggleAuth()" class="text-emerald-600 font-bold">Back to Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="container mx-auto px-4 mt-6 hidden">
+        <div class="grid lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-3xl shadow-lg p-6 border border-slate-100">
+                    <h3 class="font-bold text-slate-800 mb-4 text-lg">Where to?</h3>
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <i class="fas fa-circle text-[10px] text-emerald-500 absolute left-4 top-5"></i>
+                            <input type="text" id="pickup" placeholder="Pickup point" class="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div class="relative">
+                            <i class="fas fa-square text-[10px] text-slate-900 absolute left-4 top-5"></i>
+                            <input type="text" id="drop" placeholder="Destination" class="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <button onclick="postTrip()" id="requestBtn" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black mt-2 shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition">
+                            REQUEST RIDE
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-slate-800 mb-4">Your Recent Trips</h3>
+                    <div id="tripHistory" class="space-y-3 text-sm">
+                        </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div id="activeStatus" class="hidden mb-6 bg-emerald-900 text-white p-6 rounded-3xl shadow-2xl flex justify-between items-center overflow-hidden relative">
+                    <div class="z-10">
+                        <span class="text-emerald-400 text-xs font-bold uppercase tracking-widest">Driver is on the way</span>
+                        <h2 class="text-2xl font-bold" id="statusMsg">Ride Accepted</h2>
+                        <p class="text-emerald-200 text-sm mt-1" id="driverInfo">Fetching driver details...</p>
+                    </div>
+                    <i class="fas fa-taxi text-7xl absolute -right-4 -bottom-4 opacity-10"></i>
+                </div>
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">Nearby Drivers</h3>
+                    <button onclick="getNearby()" class="text-emerald-600 text-sm font-bold"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div id="driverList" class="grid sm:grid-cols-2 gap-4">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "PASSENGER_KEY_2026";
+        let user = null;
+        let activeTripId = null;
+        let trackingInterval = null;
+
+        function toggleAuth() {
+            document.getElementById('loginForm').classList.toggle('hidden');
+            document.getElementById('registerForm').classList.toggle('hidden');
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            const res = await fetch(`/api/passengers/login?email=${email}&password=${pass}`, { method: 'POST', headers: { 'X-API-KEY': API_KEY } });
+            if (res.ok) {
+                user = await res.json();
+                showDashboard();
+            } else { alert("Login failed."); }
+        }
+
+        function showDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('navName').innerText = user.name;
+            getNearby();
+            loadHistory();
+        }
+
+        async function getNearby() {
+            // Placeholder coords, ideally use navigator.geolocation
+            const res = await fetch(`/api/drivers/nearby-eta?lat=18.52&lng=73.85`, { headers: { 'X-API-KEY': API_KEY } });
+            const drivers = await res.json();
+            let html = '';
+            drivers.forEach(d => {
+                html += `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-800">${d.name}</h4>
+                        <p class="text-xs text-slate-400">${d.vehicle.model} • ${d.etaMinutes} mins away</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-emerald-600 font-bold">${d.distanceKm}km</p>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('driverList').innerHTML = html || 'No drivers nearby.';
+        }
+
+        async function postTrip() {
+            const payload = {
+                passenger: { id: user.id },
+                pickupLocation: document.getElementById('pickup').value,
+                dropLocation: document.getElementById('drop').value,
+                status: "POSTED"
+            };
+            const res = await fetch('/api/trips/post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const trip = await res.json();
+                activeTripId = trip.id;
+                document.getElementById('requestBtn').innerText = "WAITING FOR DRIVER...";
+                document.getElementById('requestBtn').disabled = true;
+                startTripStatusPolling();
+            }
+        }
+
+        // Polling to see when a driver accepts (Uses /api/passengers/{id}/trips)
+        function startTripStatusPolling() {
+            const poll = setInterval(async () => {
+                const res = await fetch(`/api/passengers/${user.id}/trips`, { headers: { 'X-API-KEY': API_KEY } });
+                const trips = await res.json();
+                const currentTrip = trips.find(t => t.id === activeTripId);
+
+                if (currentTrip && currentTrip.status === "ACCEPTED") {
+                    clearInterval(poll);
+                    showActiveRideUI(currentTrip);
+                } else if (currentTrip && currentTrip.status === "EXPIRED") {
+                    clearInterval(poll);
+                    alert("No drivers accepted your ride. Please try again.");
+                    location.reload();
+                }
+            }, 3000);
+        }
+
+        function showActiveRideUI(trip) {
+            document.getElementById('activeStatus').classList.remove('hidden');
+            document.getElementById('driverInfo').innerText = `${trip.driver.name} is driving a ${trip.driver.vehicle.model} (${trip.driver.vehicle.plateNumber})`;
+            
+            // Start Tracking the Driver's real-time movement!
+            trackingInterval = setInterval(async () => {
+                const res = await fetch(`/api/passengers/trips/${trip.id}/driver-location`, { headers: { 'X-API-KEY': API_KEY } });
+                if (res.ok) {
+                    const loc = await res.json();
+                    document.getElementById('statusMsg').innerText = `Driver at: ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
+                } else {
+                    // If 400 Bad Request, the trip is likely completed
+                    document.getElementById('statusMsg').innerText = "Trip Completed!";
+                    clearInterval(trackingInterval);
+                }
+            }, 5000);
+        }
+
+        async function loadHistory() {
+            const res = await fetch(`/api/passengers/${user.id}/trips`, { headers: { 'X-API-KEY': API_KEY } });
+            const trips = await res.json();
+            document.getElementById('tripHistory').innerHTML = trips.slice(0, 3).map(t => `
+                <div class="border-b border-slate-50 pb-2">
+                    <p class="font-medium text-slate-700 text-xs">${t.dropLocation}</p>
+                    <p class="text-[10px] text-slate-400">${t.status} • ₹${t.finalFare || 0}</p>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

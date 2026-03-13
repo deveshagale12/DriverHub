@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Insights | RideEase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+    <div class="flex">
+        <div class="w-64 bg-slate-800 h-screen p-6 hidden md:block border-r border-slate-700">
+            <h1 class="text-2xl font-black text-emerald-400 mb-10 italic">RideEase Admin</h1>
+            <nav class="space-y-4">
+                <a href="#" class="block p-3 bg-emerald-600 rounded-xl font-bold"><i class="fas fa-chart-line mr-3"></i>Analytics</a>
+                <a href="admin.html" class="block p-3 hover:bg-slate-700 rounded-xl transition"><i class="fas fa-id-card mr-3"></i>Verify Drivers</a>
+                <a href="#" class="block p-3 hover:bg-slate-700 rounded-xl transition"><i class="fas fa-history mr-3"></i>Trip Logs</a>
+            </nav>
+        </div>
+
+        <main class="flex-1 p-8">
+            <header class="flex justify-between items-center mb-10">
+                <h2 class="text-3xl font-bold">Business Overview</h2>
+                <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                    <span class="text-slate-400 text-sm">System Status: </span>
+                    <span class="text-emerald-400 font-bold animate-pulse">● Live</span>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+                    <p class="text-slate-400 text-sm font-bold uppercase">Total Revenue</p>
+                    <h3 class="text-3xl font-black mt-2" id="statRevenue">₹0</h3>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+                    <p class="text-slate-400 text-sm font-bold uppercase">Platform Fee (10%)</p>
+                    <h3 class="text-3xl font-black mt-2 text-emerald-400" id="statCommission">₹0</h3>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+                    <p class="text-slate-400 text-sm font-bold uppercase">Active Drivers</p>
+                    <h3 class="text-3xl font-black mt-2" id="statDrivers">0</h3>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+                    <p class="text-slate-400 text-sm font-bold uppercase">Total Bookings</p>
+                    <h3 class="text-3xl font-black mt-2" id="statTrips">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 rounded-3xl border border-slate-700 overflow-hidden">
+                <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                    <h3 class="font-bold">Recent Live Activity</h3>
+                    <button onclick="refreshStats()" class="text-sm bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition">Refresh Data</button>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                        <tr>
+                            <th class="p-4">Trip ID</th>
+                            <th class="p-4">Passenger</th>
+                            <th class="p-4">Driver</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Fare</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liveTable" class="text-sm">
+                        </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_KEY = "PASSENGER_KEY_2026";
+
+        async function refreshStats() {
+            try {
+                // 1. Fetch Summary Stats
+                const statsRes = await fetch('/api/admin/stats/summary', { headers: { 'X-API-KEY': API_KEY } });
+                const stats = await statsRes.json();
+                
+                document.getElementById('statRevenue').innerText = `₹${stats.totalRevenue.toFixed(2)}`;
+                document.getElementById('statCommission').innerText = `₹${stats.commission.toFixed(2)}`;
+                document.getElementById('statDrivers').innerText = stats.activeDrivers;
+                document.getElementById('statTrips').innerText = stats.totalTrips;
+
+                // 2. Fetch Recent Trips for the table
+                const tripsRes = await fetch('/api/trips/available', { headers: { 'X-API-KEY': API_KEY } }); 
+                // Note: You might want a dedicated /api/trips/all for admin
+                const trips = await tripsRes.json();
+                
+                const tbody = document.getElementById('liveTable');
+                tbody.innerHTML = trips.slice(0, 10).map(t => `
+                    <tr class="border-b border-slate-700 hover:bg-slate-700/30">
+                        <td class="p-4 font-mono text-emerald-500">#${t.id}</td>
+                        <td class="p-4">${t.passenger.name}</td>
+                        <td class="p-4">${t.driver ? t.driver.name : '<span class="text-slate-500 italic">Searching...</span>'}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${t.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'}">
+                                ${t.status}
+                            </span>
+                        </td>
+                        <td class="p-4 font-bold">₹${t.finalFare || '--'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error("Failed to load admin stats", err);
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        refreshStats();
+        setInterval(refreshStats, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Private Car Booking</title>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: var(--primary); }
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; margin-right: 5px; }
+        .btn-approve { background: var(--success); }
+        .btn-reject { background: var(--danger); }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85em; background: #f1c40f; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Admin Control Panel: Driver Approvals</h2>
+    <p>Review new driver registrations and vehicle details.</p>
+    
+    <button onclick="loadPendingDrivers()" style="background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+        🔄 Refresh Applications
+    </button>
+
+    <table id="driverTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>License</th>
+                <th>Vehicle Model</th>
+                <th>Plate Number</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="driverList">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const API_KEY = "PASSENGER_KEY_2026";
+
+    async function loadPendingDrivers() {
+        try {
+            const res = await fetch('/api/drivers/admin/pending', {
+                headers: { 'X-API-KEY': API_KEY }
+            });
+            const drivers = await res.json();
+            
+            const tbody = document.getElementById('driverList');
+            tbody.innerHTML = '';
+
+            drivers.forEach(driver => {
+                const row = `
+                    <tr>
+                        <td><strong>${driver.name}</strong></td>
+                        <td>${driver.licenseNumber}</td>
+                        <td>${driver.vehicle ? driver.vehicle.model : 'N/A'}</td>
+                        <td>${driver.vehicle ? driver.vehicle.plateNumber : 'N/A'}</td>
+                        <td><span class="badge">${driver.status}</span></td>
+                        <td>
+                            <button class="btn btn-approve" onclick="verifyDriver(${driver.id}, 'CONFIRMED')">Approve</button>
+                            <button class="btn btn-reject" onclick="verifyDriver(${driver.id}, 'REJECTED')">Reject</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            if (drivers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No pending applications found.</td></tr>';
+            }
+        } catch (error) {
+            console.error("Error loading drivers:", error);
+        }
+    }
+
+    async function verifyDriver(id, status) {
+        const res = await fetch(`/api/drivers/admin/verify/${id}?status=${status}`, {
+            method: 'PATCH',
+            headers: { 'X-API-KEY': API_KEY }
+        });
+
+        if (res.ok) {
+            alert(`Driver ${status} successfully!`);
+            loadPendingDrivers();
+        } else {
+            alert("Error updating driver status.");
+        }
+    }
+
+    // Load data on page open
+    loadPendingDrivers();
+</script>
+</body>
+</html>
