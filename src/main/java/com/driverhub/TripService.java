@@ -1,5 +1,4 @@
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;

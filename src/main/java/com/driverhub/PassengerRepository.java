@@ -1,5 +1,4 @@
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;

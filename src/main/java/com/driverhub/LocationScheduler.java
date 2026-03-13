@@ -1,6 +1,5 @@
 
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

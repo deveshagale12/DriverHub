@@ -1,6 +1,5 @@
 
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 @Entity

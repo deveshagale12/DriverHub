@@ -1,6 +1,5 @@
 
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;

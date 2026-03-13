@@ -1,6 +1,5 @@
 
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;

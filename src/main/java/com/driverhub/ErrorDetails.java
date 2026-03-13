@@ -1,5 +1,5 @@
 
-package com.example.Private_CAR_Booking;
+package com.driverhub;
 import java.time.LocalDateTime;
 
 public class ErrorDetails {

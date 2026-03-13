@@ -1,6 +1,5 @@
 
-package com.example.Private_CAR_Booking;
-
+package com.driverhub;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 @Repository

@@ -1,4 +1,4 @@
-
+package com.driverhub;
 /**
  * Data Transfer Object to send nearby driver information 
  * along with calculated distance and ETA to the passenger.
